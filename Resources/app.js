@@ -26,6 +26,13 @@ var slidingMenu = new MASlidingMenu({
 slidingMenu.open();
 
 // event fired when user selects a view from the nav
+slidingMenu.addEventListener('buttonclick', function(e) {
+	if (e.index === 2) {
+		alert('You clicked on Button');
+	}
+});
+
+// event fired when user selects a view from the nav
 slidingMenu.addEventListener('switch', function(e) {
 	//alert(e.menuRow);
 	//alert(e.index);

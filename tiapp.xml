@@ -1,4 +1,8 @@
-<?xml version="1.0" encoding="UTF-8"?><ti:app xmlns:ti="http://ti.appcelerator.org">
+<?xml version="1.0" encoding="UTF-8"?>
+<ti:app xmlns:ti="http://ti.appcelerator.org">
+    <modules>
+        <module platform="android" version="1.0">ti.draggable</module>
+    </modules>
     <deployment-targets>
         <target device="mobileweb">false</target>
         <target device="iphone">true</target>
@@ -10,10 +14,10 @@
     <id>com.mattapp.sliderview</id>
     <name>SliderViewExample</name>
     <version>1.0</version>
-    <publisher>Matt Apperson</publisher>
-    <url>http://mattapperson.com</url>
-    <description>not specified</description>
-    <copyright>2012 by Matt Apperson</copyright>
+    <publisher>Apperson Labs</publisher>
+    <url>http://http://appersonlabs.com</url>
+    <description>A Facebook / Path style sliding menu for iOS and Android</description>
+    <copyright>2012 by Apperson Labs</copyright>
     <icon>appicon.png</icon>
     <persistent-wifi>false</persistent-wifi>
     <prerendered-icon>false</prerendered-icon>
@@ -22,21 +26,21 @@
     <fullscreen>false</fullscreen>
     <navbar-hidden>false</navbar-hidden>
     <analytics>false</analytics>
-    <iphone>
-        <orientations device="iphone">
-            <orientation>Ti.UI.PORTRAIT</orientation>
-        </orientations>
-        <orientations device="ipad">
-            <orientation>Ti.UI.PORTRAIT</orientation>
-            <orientation>Ti.UI.UPSIDE_PORTRAIT</orientation>
-            <orientation>Ti.UI.LANDSCAPE_LEFT</orientation>
-            <orientation>Ti.UI.LANDSCAPE_RIGHT</orientation>
-        </orientations>
-    </iphone>
+    <ios>
+        <min-ios-ver>4.3</min-ios-ver>
+        <plist>
+            <dict>
+                <key>UISupportedInterfaceOrientations</key>
+                <array>
+                    <string>UIInterfaceOrientationPortrait</string>
+                </array>
+            </dict>
+        </plist>
+    </ios>
     <android xmlns:android="http://schemas.android.com/apk/res/android">
-		<manifest>
-			<supports-screens android:anyDensity="false"/>
-		</manifest>
-	</android>
-<guid>323c49ad2d1344d687e948931ddfd945</guid>
+        <manifest>
+            <supports-screens android:anyDensity="false"/>
+        </manifest>
+    </android>
+    <guid>323c49ad2d1344d687e948931ddfd945</guid>
 </ti:app>

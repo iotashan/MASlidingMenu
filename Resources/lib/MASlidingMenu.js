@@ -1,6 +1,3 @@
-
-var platform = Ti.Platform.osname;
-
 var MASlidingMenu = function(args) {
     var self = Ti.UI.createWindow({exitOnClose:false});
 
@@ -41,6 +38,14 @@ var MASlidingMenu = function(args) {
 
     // Our Identity Matrix for all animations using transform
     var twoD = Ti.UI.create2DMatrix();
+    
+    self.addEventListener('postlayout',function(e){
+    	// set the size after we know what the size is. this should cover orientation too
+        half = {
+            width: self.rect.width / 2,
+            height: self.rect.height / 2
+        };
+    });
 
     var open = function() {
 
@@ -75,6 +80,10 @@ var MASlidingMenu = function(args) {
                     View.height = Ti.UI.FILL;
 
                     views.push(View);
+                    
+                    if (!view) {
+				        view = views[views.length-1]; // set the first view we can find
+                    }
 
                     // Hide all but the first one... but add them to self so they load and reduce lag... just like ios tabgroup...
                     self.add(View);
@@ -83,17 +92,16 @@ var MASlidingMenu = function(args) {
                     }
 
                 } else {
-                    views.push({}); // keep our index correct...
+                    views.push(false); // keep our index correct...
                 }
             }
         }
-        view = views[0]; // set the first view
 
         ledge = view.width * 0.8,
         threshold = view.width * 0.2,
         half = {
             width: view.width / 2,
-            height: view.height / 2
+            height: view.size.height / 2
         };
         left.zIndex = 1;
         view.zIndex = 2;
@@ -104,16 +112,28 @@ var MASlidingMenu = function(args) {
 
         left.addEventListener('click', function(e) {
             var newView;
-            if(views[e.index].toString() !== "object") {
+            
+            if(views[e.index]) { // see if it's an object, or a boolean false
                 newView = views[e.index];
                 changeView(newView);
+                
+	            fireEvent('switch', {
+	                view: newView,
+	                index: views.indexOf(newView),
+	                menuRow: e.rowData
+	            });
+            } else {
+            	newView = view; // switch back to the old view
+            	
+				// this row had no view attached, fire an event so the user can do something
+	            fireEvent('buttonclick', {
+	                index: e.index,
+	                rowData: e.rowData,
+	                source: e.source,
+	            });
+	            
+	            changeView(view);
             }
-
-            fireEvent('switch', {
-                view: newView,
-                index: views.indexOf(newView),
-                menuRow: e.rowData
-            });
         });
         addEventListener('open', function() {
             slideView('left');
@@ -152,30 +172,39 @@ var MASlidingMenu = function(args) {
     };
 
     var slideView = function(position) {
-
         var delta_xs;
         delta_xs = {
             left: ledge,
             view: 0
         };
-        view.animate({
-            center: {
-                x: delta_xs[position] + half.width,
-                y: half.height
-            },
-            duration: duration.slide
-        });
+        if (Ti.Android) {
+        	// just slide the view on Android
+            view.animate({
+                left: delta_xs[position],
+                duration: duration.slide
+            });
+        } else {
+	        view.animate({
+	            center: {
+	                x: delta_xs[position] + half.width,
+	                y: half.height
+	            },
+	            duration: duration.slide
+	        });
+        }
         current = position;
         onCurrentChanged();
     };
 
     var viewTouchstart = function(e) {
+    	Ti.API.info('touchstart: '+JSON.stringify(e));
         Ti.API.info('starting');
         sliding.offset = e.x - half.width;
         sliding.center = view.rect.x + half.width;
     };
 
     var viewTouchmove = function(e) {
+    	Ti.API.info('touchmove: '+JSON.stringify(e));
         var delta_x;
 
         delta_x = e.x - sliding.offset + view.rect.x;
@@ -218,6 +247,7 @@ var MASlidingMenu = function(args) {
     };
 
     var viewTouchend = function(e) {
+    	Ti.API.info('touchend: '+JSON.stringify(e));
         var delta_x;
 
         delta_x = e.x - sliding.offset + view.rect.x ;
@@ -259,12 +289,41 @@ var MASlidingMenu = function(args) {
         onCurrentChanged();
     };
 
+    var viewAndroidend = function(e) {
+    	Ti.API.info('androidend: '+JSON.stringify(e));
+    	
+    	if (e.left === e.minLeft || e.left === e.maxLeft) {
+    		// already there
+    		current = e.left === e.maxLeft ? 'left':'view';
+    		return;
+    	}
+
+		if(e.left >= threshold){
+			// finish showing menu
+			current = 'left';
+            view.animate({
+                left: e.source.maxLeft,
+                duration: duration.swipe
+            });
+		} else {
+			// finish hiding menu
+			current = 'view';
+            view.animate({
+                left: 0,
+                duration: duration.swipe
+            });
+		}
+        onCurrentChanged();
+    };
+
     var addEvents = function() {
         if(view.toString() === "[object TiUIiPhoneNavigationGroup]") {
             view.window.addEventListener('touchstart', viewTouchstart);
             view.window.addEventListener('touchmove', viewTouchmove);
             view.window.addEventListener('touchend', viewTouchend);
             view.window.addEventListener('touchcancel', viewTouchend);
+        } else if (Ti.Android) {
+            view.addEventListener('end', viewAndroidend);
         } else {
             view.addEventListener('touchstart', viewTouchstart);
             view.addEventListener('touchmove', viewTouchmove);
@@ -278,6 +337,8 @@ var MASlidingMenu = function(args) {
             view.window.removeEventListener('touchstart', viewTouchstart);
             view.window.removeEventListener('touchmove', viewTouchmove);
             view.window.removeEventListener('touchend', viewTouchend);
+        } else if (Ti.Android) {
+            view.removeEventListener('end', viewAndroidend);
         } else {
             view.removeEventListener('touchstart', viewTouchstart);
             view.removeEventListener('touchmove', viewTouchmove);
@@ -286,37 +347,72 @@ var MASlidingMenu = function(args) {
     };
 
     var changeView = function(newView) {
-        if (view !== newView) {
-            newView.hide();
-            newView.center = {
-                x: half.width,
-                y: half.height
-            };
-            newView.width = Ti.Platform.displayCaps.platformWidth;
-            newView.height = Ti.UI.FILL;
-        }
-
-        view.animate({
-            transform: twoD.translate(view.rect.x + (Ti.Platform.displayCaps.platformWidth - view.rect.x), 0), //twoD.translate(delta_x, 0),
-            duration: duration.change_out
-        }, function() {
-
-            if(draggable) {
-                removeEvents();
-            }
-            view.hide();
-            view = newView;
-            current = 'view';
-            view.show();
-
-            if(draggable) {
-                addEvents();
-            }
-            view.animate({
-                transform: twoD.translate(0, 0),
-                duration: duration.change_in
-            });
-        });
+    	if (Ti.Android) {
+	        if (view !== newView) {
+	            newView.hide();
+	            newView.left = Ti.Platform.displayCaps.platformWidth;
+	            newView.width = Ti.Platform.displayCaps.platformWidth;
+	            newView.height = Ti.UI.FILL;
+	        }
+	
+	        view.animate({
+	            left:Ti.Platform.displayCaps.platformWidth,
+	            duration: duration.change_out
+	        }, function() {
+	
+	            if(draggable) {
+	                removeEvents();
+	            }
+	            view.hide();
+	            view = newView;
+	            current = 'view';
+	            view.show();
+	
+	            if(draggable) {
+	                addEvents();
+	            }
+	            view.animate({
+	                left:0,
+	                duration: duration.change_in
+	            });
+	        });
+    	} else {
+	        if (view !== newView) {
+	            newView.hide();
+	            newView.center = {
+	                x: half.width,
+	                y: half.height
+	            };
+	            newView.animate({
+	            	transform: twoD.translate(Ti.Platform.displayCaps.platformWidth,0),
+	            	duration: 0.1
+	            });
+	            newView.width = Ti.Platform.displayCaps.platformWidth;
+	            newView.height = Ti.UI.FILL;
+	        }
+	
+	        view.animate({
+	            transform: twoD.translate(view.rect.x + (Ti.Platform.displayCaps.platformWidth - view.rect.x), 0), //twoD.translate(delta_x, 0),
+	            duration: duration.change_out
+	        }, function() {
+	
+	            if(draggable) {
+	                removeEvents();
+	            }
+	            view.hide();
+	            view = newView;
+	            current = 'view';
+	            view.show();
+	
+	            if(draggable) {
+	                addEvents();
+	            }
+	            view.animate({
+	                transform: twoD.translate(0, 0),
+	                duration: duration.change_in
+	            });
+	        });
+    	}
     };
 
 

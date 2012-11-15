@@ -23,6 +23,8 @@ var createTableViewRow = function(rowData){
 	if(rowData.hasDetail){
 		var detail = Ti.UI.createImageView({
 			right:90,
+			width:8,
+			height:13,
 			image:'/images/arrow.png'
 		});
 		row.add(detail);
