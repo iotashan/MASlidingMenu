@@ -353,65 +353,70 @@ var MASlidingMenu = function(args) {
 	            newView.left = Ti.Platform.displayCaps.platformWidth;
 	            newView.width = Ti.Platform.displayCaps.platformWidth;
 	            newView.height = Ti.UI.FILL;
+		
+		        view.animate({
+		            left:Ti.Platform.displayCaps.platformWidth,
+		            duration: duration.change_out
+		        }, function() {
+		
+		            if(draggable) {
+		                removeEvents();
+		            }
+		            view.hide();
+		            view = newView;
+		            current = 'view';
+		            view.show();
+		
+		            if(draggable) {
+		                addEvents();
+		            }
+		            view.animate({
+		                left:0,
+		                duration: duration.change_in
+		            });
+		        });
+	        } else {
+	        	slideView('view');
 	        }
-	
-	        view.animate({
-	            left:Ti.Platform.displayCaps.platformWidth,
-	            duration: duration.change_out
-	        }, function() {
-	
-	            if(draggable) {
-	                removeEvents();
-	            }
-	            view.hide();
-	            view = newView;
-	            current = 'view';
-	            view.show();
-	
-	            if(draggable) {
-	                addEvents();
-	            }
-	            view.animate({
-	                left:0,
-	                duration: duration.change_in
-	            });
-	        });
     	} else {
 	        if (view !== newView) {
-	            newView.hide();
 	            newView.center = {
 	                x: half.width,
 	                y: half.height
 	            };
+	            
+	            newView.hide();
 	            newView.animate({
 	            	transform: twoD.translate(Ti.Platform.displayCaps.platformWidth,0),
 	            	duration: 0.1
 	            });
 	            newView.width = Ti.Platform.displayCaps.platformWidth;
 	            newView.height = Ti.UI.FILL;
+		
+		        view.animate({
+		            transform: twoD.translate(view.rect.x + (Ti.Platform.displayCaps.platformWidth - view.rect.x), 0), //twoD.translate(delta_x, 0),
+		            duration: duration.change_out
+		        }, function() {
+		
+		            if(draggable) {
+		                removeEvents();
+		            }
+		            view.hide();
+		            view = newView;
+		            current = 'view';
+		            view.show();
+		
+		            if(draggable) {
+		                addEvents();
+		            }
+		            view.animate({
+		                transform: twoD.translate(0, 0),
+		                duration: duration.change_in
+		            });
+		        });
+	        } else {
+	        	slideView('view');
 	        }
-	
-	        view.animate({
-	            transform: twoD.translate(view.rect.x + (Ti.Platform.displayCaps.platformWidth - view.rect.x), 0), //twoD.translate(delta_x, 0),
-	            duration: duration.change_out
-	        }, function() {
-	
-	            if(draggable) {
-	                removeEvents();
-	            }
-	            view.hide();
-	            view = newView;
-	            current = 'view';
-	            view.show();
-	
-	            if(draggable) {
-	                addEvents();
-	            }
-	            view.animate({
-	                transform: twoD.translate(0, 0),
-	                duration: duration.change_in
-	            });
-	        });
     	}
     };
 
@@ -424,6 +429,9 @@ var MASlidingMenu = function(args) {
     this.addEventListener = addEventListener;
     this.fireEvent = fireEvent;
     this.open = open;
+    this.destroy = function() {
+    	self.close();
+    };
     this.activeView = function() {
         return view;
     };

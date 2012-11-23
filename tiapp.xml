@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ti:app xmlns:ti="http://ti.appcelerator.org">
-    <modules>
-        <module platform="android" version="1.0">ti.draggable</module>
-    </modules>
     <deployment-targets>
         <target device="mobileweb">false</target>
         <target device="iphone">true</target>
@@ -26,6 +23,7 @@
     <fullscreen>false</fullscreen>
     <navbar-hidden>false</navbar-hidden>
     <analytics>false</analytics>
+    <guid>323c49ad2d1344d687e948931ddfd945</guid>
     <ios>
         <min-ios-ver>4.3</min-ios-ver>
         <plist>
@@ -42,5 +40,7 @@
             <supports-screens android:anyDensity="false"/>
         </manifest>
     </android>
-    <guid>323c49ad2d1344d687e948931ddfd945</guid>
+    <modules>
+        <module platform="android" version="1.0">ti.draggable</module>
+    </modules>
 </ti:app>
