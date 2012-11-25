@@ -6,7 +6,7 @@ var MASlidingMenu = function(args) {
         views = [],
         menuRows = [],
         events = {}, //holder for our custom events
-        draggable = args.draggable || true,
+        draggable = args.draggable === undefined ? false : args.draggable,
         ledge,
         threshold,
         half = {
@@ -160,6 +160,9 @@ var MASlidingMenu = function(args) {
     };
 
     var fireEvent = function(name, args) {
+    	if (args === undefined) {
+    		args = {};
+    	}
         args.event = name;
         for(var callback in events[name]) {
             events[name][callback](args);
@@ -185,10 +188,7 @@ var MASlidingMenu = function(args) {
             });
         } else {
 	        view.animate({
-	            center: {
-	                x: delta_xs[position] + half.width,
-	                y: half.height
-	            },
+                transform: twoD.translate(delta_xs[position], 0),
 	            duration: duration.slide
 	        });
         }
@@ -271,7 +271,7 @@ var MASlidingMenu = function(args) {
             }
 
             view.animate({
-                transform: twoD.translate(260, 0),
+                transform: twoD.translate(ledge, 0),
                 duration: duration.bounce
             });
         } else {
@@ -380,24 +380,18 @@ var MASlidingMenu = function(args) {
 	        }
     	} else {
 	        if (view !== newView) {
-	            newView.center = {
-	                x: half.width,
-	                y: half.height
-	            };
-	            
 	            newView.hide();
+	            newView.width = Ti.Platform.displayCaps.platformWidth;
+	            newView.height = Ti.UI.FILL;
 	            newView.animate({
 	            	transform: twoD.translate(Ti.Platform.displayCaps.platformWidth,0),
 	            	duration: 0.1
 	            });
-	            newView.width = Ti.Platform.displayCaps.platformWidth;
-	            newView.height = Ti.UI.FILL;
 		
 		        view.animate({
-		            transform: twoD.translate(view.rect.x + (Ti.Platform.displayCaps.platformWidth - view.rect.x), 0), //twoD.translate(delta_x, 0),
+		            transform: twoD.translate(view.rect.x + (Ti.Platform.displayCaps.platformWidth - view.rect.x), 0),
 		            duration: duration.change_out
 		        }, function() {
-		
 		            if(draggable) {
 		                removeEvents();
 		            }
